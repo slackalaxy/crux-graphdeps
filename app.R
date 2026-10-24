@@ -43,14 +43,18 @@ ui <- fluidPage(
                                options = list(placeholder = "Search ports"))),
             div(style = "margin-left: 20px;",
                 uiOutput(outputId = "info")),
-            img(src = "crux-logo.png", height = "69px", style = "margin-left: auto;")
+            a(href = "https://crux.nu/", target = "_blank", style = "margin-left: auto;",
+              img(src = "crux-logo.png", height = "69px"))
   ),
   
   div(style = "border: 1px solid #EAEAEA; width: 1366px; border-radius: 5px; overflow: hidden;",
       visNetworkOutput(outputId = "net", width = "1366px", height = "768px")),
   
   p(style = "width: 1366px;",
-    span(style = "float: right;", paste0("Last updated: ", timeUTC)),
+    span(style = "float: right;",
+         icon("clock"), paste0(" Last updated: ", timeUTC, " · "),
+         a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank",
+           icon("github"), "GitHub")),
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ef2929;"), "selected",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #eeeeec; margin-left: 15px;"), "core",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #8ae234; margin-left: 15px;"), "opt",
