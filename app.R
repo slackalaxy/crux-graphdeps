@@ -37,15 +37,22 @@ ui <- fluidPage(
   titlePanel(h2("GraphDeps: a graphical overview of CRUX ports dependencies", style = "font-size: 18px;"), windowTitle = "CRUX GraphDeps"),
   
   # Grey panel on top: controls go here.
-  wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 8px; display: flex; align-items: center;",
+  wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 8px; margin-bottom: 8px; display: flex; align-items: center;",
             div(selectizeInput(inputId = "port", label = NULL,
                                choices = NULL, width = "300px",
                                options = list(placeholder = "Search ports"))),
             div(style = "margin-left: 20px;",
-                uiOutput(outputId = "info")),
+                radioButtons(inputId = "mode", label = NULL, inline = TRUE,
+                             choices = c("Dependencies (recursive)" = "deps",
+                                         "Dependents (direct)" = "rdeps"),
+                             selected = "deps")),
+            # div(style = "margin-left: 20px;",
+            #     uiOutput(outputId = "info")),
             a(href = "https://crux.nu/", target = "_blank", style = "margin-left: auto;",
               img(src = "crux-logo.png", height = "69px"))
   ),
+  div(style = "width: 1366px; min-height: 20px; margin-bottom: 8px; text-align: center;",
+      uiOutput(outputId = "info")),
   
   div(style = "border: 1px solid #EAEAEA; width: 1366px; border-radius: 5px; overflow: hidden;",
       visNetworkOutput(outputId = "net", width = "1366px", height = "768px")),
@@ -53,8 +60,8 @@ ui <- fluidPage(
   p(style = "width: 1366px;",
     span(style = "float: right;",
          icon("clock"), paste0(" Last updated: ", timeUTC, " · "),
-         a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank",
-           icon("github"), "GitHub")),
+         a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub")),
+    strong("Legend:", style = "margin-right: 8px;"),
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ef2929;"), "selected",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #eeeeec; margin-left: 15px;"), "core",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #8ae234; margin-left: 15px;"), "opt",
@@ -76,9 +83,11 @@ server <- function(input, output, session) {
   # Info next to the dropdown: name (collection), description, and a link.
   output$info <- renderUI({
     req(input$port)
-    p(style = "margin: 0;", a(href = unname(port_url[input$port]), target = "_blank",
-        unname(port_desc[input$port])),
-      paste0(" (", port_coll[input$port], ")"))
+    p(style = "margin: 0;",
+      strong(input$port), paste0(" (", port_coll[input$port], ")"), ": ",
+      a(href = unname(port_url[input$port]), target = "_blank",
+        unname(port_desc[input$port]))
+      )
   })
   
   # outputId = "net"
@@ -87,36 +96,49 @@ server <- function(input, output, session) {
     # Until a port is chosen, show this message in the network area instead.
     validate(need(input$port, " Network will appear here."))
     
-    # Start from the chosen port and keep walking back along the arrows:
-    # first its dependencies, then their dependencies, and so on,
-    # until no new names turn up.
     keep <- input$port
-    
-    # run until we reach a break
-    repeat {
+    if (input$mode == "deps") {
       
-      # For each arrow: is the port it points to one of the ports in "keep"?
-      # "keep" starts as just the selected port.
-      hits <- is.element(edges_all$to, keep)
+      # Start from the chosen port and keep walking back along the arrows:
+      # first its dependencies, then their dependencies, and so on,
+      # until no new names turn up. Run until we reach a break
+      repeat {
+        # For each arrow: is the port it points to one of the ports in "keep"?
+        # "keep" starts as just the selected port.
+        
+        hits <- is.element(edges_all$to, keep)
+        #hits <- is.element(edges_all$from, keep)
+        
+        # Keep only those arrows.
+        rows <- edges_all[hits, ]
+        
+        # Their "from" side: the dependencies of everything in keep.
+        found <- rows$from
+        #found <- rows$to
+        
+        # Drop the names we already have; what's left is new this round.
+        new <- setdiff(found, keep)
+        
+        # stop if new is empty
+        if (length(new) == 0) break
+        
+        # keep grows each time round the loop
+        keep <- c(keep, new)
+        #break
+        }
       
-      # Keep only those arrows.
-      rows <- edges_all[hits, ]
-      
-      # Their "from" side: the dependencies of everything in keep.
-      found <- rows$from
-      
-      # Drop the names we already have; what's left is new this round.
-      new <- setdiff(found, keep)
-      
-      # stop if new is empty
-      if (length(new) == 0) break
-      
-      # keep grows each time round the loop
-      keep <- c(keep, new)
-    }
+      } else {
+        # Dependents: one step forward only, the ports that list this one directly.
+        hits <- is.element(edges_all$from, keep)
+        rows <- edges_all[hits, ]
+        found <- rows$to
+        new <- setdiff(found, keep)
+        keep <- c(keep, new)
+        }
     
     # All arrows between the names collected above.
-    e <- edges_all[is.element(edges_all$to, keep),]
+    #e <- edges_all[is.element(edges_all$to, keep),]
+    e <- edges_all[is.element(edges_all$from, keep) & is.element(edges_all$to, keep), ]
     ids <- keep
     n <- data.frame(id = ids, label = ids)
     
@@ -129,6 +151,13 @@ server <- function(input, output, session) {
     
     # The chosen port overrides its collection colour, so it stands out.
     n$color[n$id == input$port] <- "#ef2929"
+    
+    # In the dependents view, colour each arrow like the port it points to,
+    # instead of the default (the colour of the port it starts from).
+    if (input$mode == "rdeps") {
+      node_col <- setNames(n$color, n$id)
+      e$color <- unname(node_col[e$to])
+    }
     
     visNetwork(n, e) |>
       visNodes(font = list(size = 20), shadow = FALSE) |>
