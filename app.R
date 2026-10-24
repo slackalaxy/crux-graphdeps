@@ -52,7 +52,8 @@ ui <- fluidPage(
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #8ae234; margin-left: 15px;"), "opt",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #729fcf; margin-left: 15px;"), "xorg",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #fce94f; margin-left: 15px;"), "contrib",
-    span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ad7fa8; margin-left: 15px;"), "compat-32")
+    span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ad7fa8; margin-left: 15px;"), "compat-32",
+    span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #2e3436; margin-left: 15px;"), "N/A")
 )
 
 server <- function(input, output, session) {
@@ -75,7 +76,7 @@ server <- function(input, output, session) {
   output$net <- renderVisNetwork({
     
     # Until a port is chosen, show this message in the network area instead.
-    validate(need(input$port, "Network will appear here."))
+    validate(need(input$port, " Network will appear here."))
     
     # Start from the chosen port and keep walking back along the arrows:
     # first its dependencies, then their dependencies, and so on,
@@ -115,7 +116,7 @@ server <- function(input, output, session) {
     
     # A dependency that isn't a port in any collection (e.g. a typo in a
     # Pkgfile, or a port that was removed) has no collection: make it dark.
-    #n$color[is.na(n$color)] <- "#2e3436"
+    n$color[is.na(n$color)] <- "#2e3436"
     
     # The chosen port overrides its collection colour, so it stands out.
     n$color[n$id == input$port] <- "#ef2929"
