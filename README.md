@@ -8,7 +8,7 @@ dependencies, their dependencies, and so on, all the way down. Nodes can be
 dragged around and the view can be zoomed by the mouse wheel. [You can use the app online at Posit](https://slackalaxy-graphdeps.share.connect.posit.cloud/).
 
 ## Features
-- Repos: `core`, `opt`, `xorg`, `contrib`, `compat-32`
+- Repos: `core`, `opt`, `xorg`, `contrib`, `compat-32` `and kde-plasma-6`.
 - Arrows point from a dependency to the port that needs it.
 - Only the dependencies listed in `# Depends on:` are shown. Optional dependencies (`# Optional:`) are not included.
 
