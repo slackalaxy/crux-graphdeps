@@ -46,15 +46,16 @@ ui <- fluidPage(
                              choices = c("Dependencies (recursive)" = "deps",
                                          "Dependents (direct)" = "rdeps"),
                              selected = "deps")),
-            # div(style = "margin-left: 20px;",
-            #     uiOutput(outputId = "info")),
             a(href = "https://crux.nu/", target = "_blank", style = "margin-left: auto;",
               img(src = "crux-logo.png", height = "69px"))
   ),
   div(style = "width: 1366px; min-height: 20px; margin-bottom: 8px; text-align: center;",
       uiOutput(outputId = "info")),
   
-  div(style = "border: 1px solid #EAEAEA; width: 1366px; border-radius: 5px; overflow: hidden;",
+  # network frame, with the back button in its corner, up rihght
+  div(style = "border: 1px solid #EAEAEA; width: 1366px; border-radius: 5px; overflow: hidden; position: relative;",
+      div(style = "position: absolute; top: 8px; right: 8px; z-index: 10;",
+          actionButton(inputId = "back", label = "Previous node", icon = icon("arrow-left"), disabled = TRUE)),
       visNetworkOutput(outputId = "net", width = "1366px", height = "768px")),
   
   p(style = "width: 1366px;",
@@ -80,21 +81,64 @@ server <- function(input, output, session) {
                        options = list(maxOptions = length(ports),
                                       placeholder = "Search ports"))
   
-  # Info next to the dropdown: name (collection), description, and a link.
+  # Info: name (collection), description/link.
   output$info <- renderUI({
     req(input$port)
     p(style = "margin: 0;",
-      strong(input$port), paste0(" (", port_coll[input$port], ")"), ": ",
+      strong(input$port), paste0(" (", port_coll[input$port], "): "),
       a(href = unname(port_url[input$port]), target = "_blank",
         unname(port_desc[input$port]))
       )
+  })
+  
+  # Ports visited so far, oldest first.
+  visited <- reactiveVal(character(0))
+  
+  # Record each newly selected port, unless it's already the last one in the
+  # list (which is what happens when the back button itself selects it).
+  observeEvent(input$port, {
+    req(input$port)
+    v <- visited()
+    if (length(v) == 0 || v[length(v)] != input$port) {
+      visited(c(v, input$port))
+    }
+  })
+  
+  # Back: drop the current port from the list and select the one before it.
+  observeEvent(input$back, {
+    v <- visited()
+    if (length(v) > 1) {
+      v <- v[-length(v)]
+      visited(v)
+      updateSelectizeInput(session, "port", choices = ports, server = TRUE,
+                           selected = v[length(v)],
+                           options = list(maxOptions = length(ports),
+                                          placeholder = "Search ports"))
+    }
+  })
+  
+  # Double-clicked node: make it the selected port in the dropdown.
+  # Everything else (description, network) follows, as if picked by hand.
+  observeEvent(input$dblclick_node, {
+    # Skip names that aren't ports (the dark N/A nodes, e.g. wine).
+    if (is.element(input$dblclick_node, ports)) {
+      updateSelectizeInput(session, "port", choices = ports, server = TRUE,
+                           selected = input$dblclick_node,
+                           options = list(maxOptions = length(ports),
+                                          placeholder = "Search ports"))
+    }
+  })
+  
+  # Dim the back button when there's nowhere to go back to.
+  observeEvent(visited(), {
+    updateActionButton(session, "back", disabled = length(visited()) <= 1)
   })
   
   # outputId = "net"
   output$net <- renderVisNetwork({
     
     # Until a port is chosen, show this message in the network area instead.
-    validate(need(input$port, " Network will appear here."))
+    validate(need(input$port, " Network will appear here. Double click on a node to switch to it."))
     
     keep <- input$port
     if (input$mode == "deps") {
@@ -157,12 +201,22 @@ server <- function(input, output, session) {
     if (input$mode == "rdeps") {
       node_col <- setNames(n$color, n$id)
       e$color <- unname(node_col[e$to])
-    }
+      
+      }
     
     visNetwork(n, e) |>
       visNodes(font = list(size = 20), shadow = FALSE) |>
       visEdges(arrows = "to") |>
-      visPhysics(solver = "forceAtlas2Based")
+      visPhysics(solver = "forceAtlas2Based") |>
+      
+      # When a node is double-clicked, send its name to R as input$dblclick_node.
+      # params.nodes is the list of nodes under the mouse (empty if you
+      # double-click on empty space, so we check that first).
+      visEvents(doubleClick = "function(params) {
+        if (params.nodes.length > 0) {
+          Shiny.setInputValue('dblclick_node', params.nodes[0], {priority: 'event'});
+        }
+      }")
   })
 }
 
