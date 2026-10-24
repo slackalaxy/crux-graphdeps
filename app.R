@@ -24,8 +24,12 @@ port_desc <- unique(collections[, c(2,5)])
 port_desc <- setNames(port_desc$description, port_desc$port)
 
 # One colour per collection. Change these to whatever you like.
-cols <- c("core" = "#eeeeec", "opt" = "#8ae234", "xorg" = "#729fcf",
-          "contrib" = "#fce94f", "compat-32" = "#ad7fa8")
+cols <- c("core"         = "#eeeeec",
+          "opt"          = "#8ae234",
+          "xorg"         = "#729fcf",
+          "contrib"      = "#fce94f",
+          "compat-32"    = "#ad7fa8",
+          "kde-plasma-6" = "#e9b96e")
 
 # The page layout: a dropdown to choose a port, and the network below it.
 ui <- fluidPage(
@@ -53,6 +57,7 @@ ui <- fluidPage(
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #729fcf; margin-left: 15px;"), "xorg",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #fce94f; margin-left: 15px;"), "contrib",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ad7fa8; margin-left: 15px;"), "compat-32",
+    span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #e9b96e; margin-left: 15px;"), "kde-plasma-6",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #2e3436; margin-left: 15px;"), "N/A")
 )
 
