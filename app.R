@@ -8,7 +8,8 @@ timeUTC <- readLines("./timeUTC.txt")
 edges_all <- subset(collections, collections$dependency != "")
 edges_all <- edges_all[, c(1,2)]
 colnames(edges_all) <- c("from", "to")
-
+#counts <- table(edges_all$to)
+counts <- table(edges_all$from)
 # Alphabetical list of ports for the dropdown.
 ports <- sort(unique(collections$port))
 
@@ -198,6 +199,12 @@ server <- function(input, output, session) {
     # The chosen port overrides its collection colour, so it stands out.
     n$color[n$id == input$port] <- "#ef2929"
     
+    n$value <- as.numeric(counts[n$id])
+    n$value[is.na(n$value)] <- 0
+    
+    # Tooltip on hover: the number behind the node's size.
+    n$title <- paste0("Dependents: ", n$value)
+    
     # In the dependents view, colour each arrow like the port it points to,
     # instead of the default (the colour of the port it starts from).
     if (input$mode == "rdeps") {
@@ -207,7 +214,7 @@ server <- function(input, output, session) {
       }
     
     visNetwork(n, e) |>
-      visNodes(font = list(size = 20, face = "Arial"), shadow = FALSE) |>
+      visNodes(font = list(size = 20, face = "Arial"), shadow = FALSE, scaling = list(min = 10, max = 40)) |>
       visEdges(arrows = "to") |>
       visPhysics(solver = "forceAtlas2Based") |>
       
