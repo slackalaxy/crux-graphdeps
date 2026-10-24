@@ -50,7 +50,7 @@ read_collection <- function(coll, branch) {
 # Read collections and stack them into one table.
 fetch_all <- function() {
   all_df <- data.frame()
-  for (coll in c("core", "opt", "xorg", "contrib", "compat-32")) {
+  for (coll in c("core", "opt", "xorg", "contrib", "compat-32", "kde-plasma-6")) {
     all_df <- rbind(all_df, read_collection(coll, branch))
   }
   return(all_df)
