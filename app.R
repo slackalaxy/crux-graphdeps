@@ -33,7 +33,9 @@ cols <- c("core"         = "#eeeeec",
 
 # The page layout: a dropdown to choose a port, and the network below it.
 ui <- fluidPage(
-  tags$style(".form-group { margin-bottom: 0; }"),
+  tags$style(".form-group { margin-bottom: 0; }
+             body { font-family: Arial, sans-serif; }"),
+  
   titlePanel(h2("GraphDeps: a graphical overview of CRUX ports dependencies", style = "font-size: 18px;"), windowTitle = "CRUX GraphDeps"),
   
   # Grey panel on top: controls go here.
@@ -205,7 +207,7 @@ server <- function(input, output, session) {
       }
     
     visNetwork(n, e) |>
-      visNodes(font = list(size = 20), shadow = FALSE) |>
+      visNodes(font = list(size = 20, face = "Arial"), shadow = FALSE) |>
       visEdges(arrows = "to") |>
       visPhysics(solver = "forceAtlas2Based") |>
       
