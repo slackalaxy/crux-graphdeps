@@ -37,34 +37,75 @@ ui <- fluidPage(
   tags$style(".form-group { margin-bottom: 0; }
              body { font-family: Arial, sans-serif; }"),
   
-  titlePanel(h2("GraphDeps: a graphical overview of CRUX ports dependencies", style = "font-size: 18px;"), windowTitle = "CRUX GraphDeps"),
+  #titlePanel(h2("GraphDeps: a graphical overview of CRUX ports dependencies", style = "font-size: 18px;"), windowTitle = "CRUX GraphDeps"),
+  tags$head(tags$title("CRUX GraphDeps")),
+  
+  p(style = "width: 1366px; text-align: right;",
+    span(
+         a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub"),
+         "::",
+         a(href = "mailto:slackalaxy@gmail.com", icon("envelope"), "Contact"),
+         "::",
+         # a(href = "https://crux.nu/portdb/", target = "_blank", icon("database"), "portdb"),
+         # "::",
+         icon("clock"), paste0(" Updated: ", timeUTC))),
   
   # Grey panel on top: controls go here.
   wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 8px; margin-bottom: 8px; display: flex; align-items: center;",
-            div(selectizeInput(inputId = "port", label = NULL,
-                               choices = NULL, width = "300px",
-                               options = list(placeholder = "Search ports"))),
-            div(style = "margin-left: 20px;",
-                radioButtons(inputId = "mode", label = NULL, inline = TRUE,
-                             choices = c("Dependencies (recursive)" = "deps",
-                                         "Dependents (direct)" = "rdeps"),
-                             selected = "deps")),
+            
+            # Left side: the title on top, the controls underneath.
+            div(
+              h2("GraphDeps: a graphical overview of CRUX ports dependencies",
+                 style = "font-size: 18px; margin: 0 0 8px 0;"),
+              div(style = "display: flex; align-items: center;",
+                  div(selectizeInput(inputId = "port", label = NULL,
+                                     choices = NULL, width = "300px",
+                                     options = list(placeholder = "Search ports"))),
+                  div(style = "margin-left: 20px;",
+                      radioButtons(inputId = "mode", label = NULL, inline = TRUE,
+                                   choices = c("Dependencies (recursive)" = "deps",
+                                               "Dependents (direct)" = "rdeps"),
+                                   selected = "deps")))
+            ),
+            
+            # Right side: the logo, linking to crux.nu.
             a(href = "https://crux.nu/", target = "_blank", style = "margin-left: auto;",
               img(src = "crux-logo.png", height = "69px"))
   ),
-  div(style = "width: 1366px; min-height: 20px; margin-bottom: 8px; text-align: center;",
-      uiOutput(outputId = "info")),
+  # div(style = "width: 1366px; min-height: 20px; margin-bottom: 8px; text-align: center;",
+  #     uiOutput(outputId = "info")),
+  
+  # network frame, with the back button in its corner, up rihght
+  # p(style = "width: 1366px;",
+  #   span(style = "float: right;",
+  #        icon("clock"), paste0(" Updated: ", timeUTC, " · "),
+  #        a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub"))),
+  
+  # p(style = "width: 1366px;",
+  #   span(style = "float: right;",
+  #        icon("hand-point-down"), "Double click to switch to another port")),
   
   # network frame, with the back button in its corner, up rihght
   div(style = "border: 1px solid #EAEAEA; width: 1366px; border-radius: 5px; overflow: hidden; position: relative;",
+      
+      div(style = "position: absolute; top: 8px; left: 8px; z-index: 10; background: rgba(255, 255, 255, 0.85); padding: 2px 6px; border-radius: 4px;",
+          uiOutput(outputId = "info")),
+      
       div(style = "position: absolute; top: 8px; right: 8px; z-index: 10;",
-          actionButton(inputId = "back", label = "Previous node", icon = icon("arrow-left"), disabled = TRUE)),
+          actionButton(inputId = "back", label = "Previous port", icon = icon("arrow-left"), disabled = TRUE)),
+      
       visNetworkOutput(outputId = "net", width = "1366px", height = "768px")),
   
   p(style = "width: 1366px;",
+    # span(style = "float: right;",
+    #      icon("clock"), paste0(" Last updated: ", timeUTC, " · "),
+    #      a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub")),
+    
     span(style = "float: right;",
-         icon("clock"), paste0(" Last updated: ", timeUTC, " · "),
-         a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub")),
+         span(style = "display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #888a85; vertical-align: middle;"),
+         span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #888a85; vertical-align: middle; margin-left: 2px; margin-right: 5px;"),
+         strong("Size: "), "number of dependents (direct) of a port, across all repos"),
+    
     strong("Legend:", style = "margin-right: 8px;"),
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ef2929;"), "selected",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #eeeeec; margin-left: 15px;"), "core",
@@ -141,7 +182,8 @@ server <- function(input, output, session) {
   output$net <- renderVisNetwork({
     
     # Until a port is chosen, show this message in the network area instead.
-    validate(need(input$port, " Network will appear here. Double click on a node to switch to it."))
+    # validate(need(input$port, " Network will appear here. Double click on a node to switch to it."))
+    validate(need(input$port, ""))
     
     keep <- input$port
     if (input$mode == "deps") {
