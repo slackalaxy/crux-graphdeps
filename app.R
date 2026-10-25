@@ -40,7 +40,7 @@ ui <- fluidPage(
   #titlePanel(h2("GraphDeps: a graphical overview of CRUX ports dependencies", style = "font-size: 18px;"), windowTitle = "CRUX GraphDeps"),
   tags$head(tags$title("CRUX GraphDeps")),
   
-  p(style = "width: 1366px; text-align: right;",
+  p(style = "width: 1366px; text-align: right; margin-top: 8px; margin-bottom: 2px;",
     span(
          a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub"),
          "::",
@@ -51,7 +51,7 @@ ui <- fluidPage(
          icon("clock"), paste0(" Updated: ", timeUTC))),
   
   # Grey panel on top: controls go here.
-  wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 8px; margin-bottom: 8px; display: flex; align-items: center;",
+  wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center;",
             
             # Left side: the title on top, the controls underneath.
             div(
