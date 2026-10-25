@@ -45,10 +45,10 @@ ui <- fluidPage(
          a(href = "https://github.com/slackalaxy/crux-graphdeps", target = "_blank", icon("github"), "GitHub"),
          "::",
          a(href = "mailto:slackalaxy@gmail.com", icon("envelope"), "Contact"),
-         "::",
-         # a(href = "https://crux.nu/portdb/", target = "_blank", icon("database"), "portdb"),
+         #"::",
+         #a(href = "https://crux.nu/portdb/", target = "_blank", icon("database"), "portdb"),
          # "::",
-         icon("clock"), paste0(" Updated: ", timeUTC))),
+         icon("clock", style = "margin-left:20px;"), paste0(" Updated on ", timeUTC))),
   
   # Grey panel on top: controls go here.
   wellPanel(style = "width: 1366px; padding: 8px 15px; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center;",
@@ -94,6 +94,14 @@ ui <- fluidPage(
       div(style = "position: absolute; top: 8px; right: 8px; z-index: 10;",
           actionButton(inputId = "back", label = "Previous port", icon = icon("arrow-left"), disabled = TRUE)),
       
+      # div(style = "position: absolute; bottom: 8px; right: 8px; z-index: 10; color: #888a85; font-size: 12px;",
+      #     icon("arrows-up-down"), " Scroll to zoom.",
+      #     icon("computer-mouse"), " Left-click to drag.",
+      #     icon("hand-pointer"), " Double-click a port to switch to it"),
+      
+      # div(style = "position: absolute; bottom: 8px; right: 8px; z-index: 10;",
+      #     uiOutput(outputId = "portdb")),
+      
       visNetworkOutput(outputId = "net", width = "1366px", height = "768px")),
   
   p(style = "width: 1366px;",
@@ -106,7 +114,7 @@ ui <- fluidPage(
          span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #888a85; vertical-align: middle; margin-left: 2px; margin-right: 5px;"),
          strong("Size: "), "number of dependents (direct) of a port, across all repos"),
     
-    strong("Legend:", style = "margin-right: 8px;"),
+    strong("Ports:", style = "margin-right: 8px;"),
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #ef2929;"), "selected",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #eeeeec; margin-left: 15px;"), "core",
     span(style = "display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #888a85; background: #8ae234; margin-left: 15px;"), "opt",
@@ -127,13 +135,32 @@ server <- function(input, output, session) {
   
   # Info: name (collection), description/link.
   output$info <- renderUI({
-    req(input$port)
+    
+    #req(input$port)
+    # No port chosen yet.
+    if (is.null(input$port) || input$port == "") {
+      return(p(style = "margin: 0; color: #888a85;",
+               icon("circle-nodes"), " Network will appear here...",
+               icon("arrows-up-down", style = "margin-left:20px;"), " Scroll to zoom",
+               " :: ",
+               icon("computer-mouse"), " Drag to move",
+               " :: ",
+               icon("hand-pointer"), " Double-click a port to switch to it"))
+    }
+    
     p(style = "margin: 0;",
       strong(input$port), paste0(" (", port_coll[input$port], "): "),
       a(href = unname(port_url[input$port]), target = "_blank",
         unname(port_desc[input$port]))
       )
   })
+  
+  # # Bottom-right corner: link to the selected port on the CRUX portdb.
+  # output$portdb <- renderUI({
+  #   req(input$port)
+  #   a(href = paste0("https://crux.nu/portdb/?a=search&q=", input$port),
+  #     target = "_blank", icon("database"), paste0(" ", input$port, " on portdb"))
+  # })
   
   # Ports visited so far, oldest first.
   visited <- reactiveVal(character(0))
@@ -183,6 +210,8 @@ server <- function(input, output, session) {
     
     # Until a port is chosen, show this message in the network area instead.
     # validate(need(input$port, " Network will appear here. Double click on a node to switch to it."))
+    
+    # Draw nothing until a port is chosen
     validate(need(input$port, ""))
     
     keep <- input$port
@@ -246,6 +275,7 @@ server <- function(input, output, session) {
     
     # Tooltip on hover: the number behind the node's size.
     n$title <- paste0("Dependents: ", n$value)
+    #n$title <- paste0("Dependents: ", n$value, "<br>Double click to switch to it")
     
     # In the dependents view, colour each arrow like the port it points to,
     # instead of the default (the colour of the port it starts from).
